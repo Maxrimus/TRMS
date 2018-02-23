@@ -1,0 +1,5 @@
+.idea/
+*.iml
+out/
+src/main/resources/credentials.txt
+target/
