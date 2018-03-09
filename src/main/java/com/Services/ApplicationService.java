@@ -1,72 +1,127 @@
 package com.Services;
 
 import com.Beans.Application;
+import com.Beans.Employee;
 import com.Beans.LearningEvent;
+import com.DAOs.ApplicationDAO;
+import com.DAOs.EmployeeDAO;
+import com.TRMS.ConnectionUtil;
+import com.TRMS.Main;
 
-import java.sql.Time;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.sql.SQLException;
+import java.util.*;
 
 public class ApplicationService {
 
-    private enum dateErrors{
-        AFTER,
-        ONEWEEK,
-        TWOWEEKS,
-        GOOD
-    }
+    ApplicationDAO applicationDAO;
+    LearningEventService learningEventService;
+    EmployeeDAO employeeDAO = new EmployeeDAO(ConnectionUtil.getConnectionUtil());
 
-    private Map<String, Double> percents;
+    enum Statuses{
+        APPROVED("approved"),
+        DENIED("denied"),
+        INPROGRESS("inprogress");
+
+        String identifier;
+
+        Statuses(String identifier){
+            this.identifier = identifier;
+        }
+    }
 
     public ApplicationService(){
-        percents = new HashMap<>();
-        percents.put("University Course",.8);
-        percents.put("Seminars",.6);
-        percents.put("Certification Preperation Class",.75);
-        percents.put("Certification",1.0);
-        percents.put("Technical Training",.9);
-        percents.put("Other",.3);
+
+        applicationDAO = new ApplicationDAO(ConnectionUtil.getConnectionUtil());
+        learningEventService = new LearningEventService();
     }
 
-    public Application createApplication(int employeeId, String justification, int gradingFormat, int eventId){
+    public int createApplication(int employeeId, java.sql.Date date, java.sql.Time time, String address, String description, int gradingFormat, String eventType, String justification, String[] fileNames, double eventCost){
+        LearningEvent learningEvent = learningEventService.createLearningEvent(eventType,time,address,description,date,eventCost);
+        if(learningEvent.isInDatabase()){
+            Application application = new Application();
+            application.setInDatabase(false);
+            application.setStatus(Statuses.INPROGRESS.identifier);
+            application.setId(-1);
+            application.setGradingFormat(gradingFormat);
+            application.setEventId(learningEvent.getId());
+            application.setEmployeeId(employeeId);
+            application.setJustification(justification);
+            try {
+                boolean created = applicationDAO.create(application);
+                if(created) return application.getId();
+                else return -1;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return -1;
+            }
+        } else return -1;
+    }
+
+    public List<Application> viewPending(int employeeid){
+        List<Application> apps = new ArrayList<>();
+        List<Application> toReturn = new ArrayList<>();
+        try {
+             apps = applicationDAO.readByEmployeeId(employeeid);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        for(Application application:apps){
+            if(application.getStatus().equals(Statuses.INPROGRESS.identifier)){
+                toReturn.add(application);
+            }
+        }
+        return toReturn;
+    }
+
+    public List<Application> viewCompleted(int employeeid){
+        List<Application> apps = new ArrayList<>();
+        List<Application> toReturn = new ArrayList<>();
+        try {
+            apps = applicationDAO.readByEmployeeId(employeeid);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        for(Application application:apps){
+            if(!application.getStatus().equals(Statuses.INPROGRESS.identifier)) toReturn.add(application);
+        }
+        return toReturn;
+    }
+
+    public Application readById(int applicationId){
         Application application = new Application();
-        application.setJustification(justification);
-        application.setGradingFormat(gradingFormat);
-        application.setEventId(eventId);
-        application.setEmployeeId(employeeId);
-        application.setId(-1);
+        try {
+            application = applicationDAO.readById(applicationId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return application;
     }
 
-    public LearningEvent createLearningEvent(String type, Time time, String location, String description, Date date, double cost){
-        LearningEvent learningEvent = new LearningEvent();
-        learningEvent.setEventType(type);
-        learningEvent.setEventTime(time);
-        learningEvent.setEventLocation(location);
-        learningEvent.setEventDescription(description);
-        dateErrors error = checkDate(date);
-        if(error == dateErrors.GOOD) learningEvent.setEventDate(new java.sql.Date(date.getTime()));
-        else learningEvent.setEventDate(new java.sql.Date(new Date().getTime()));
-        learningEvent.setEventCost(cost);
-        learningEvent.setId(-1);
-        return learningEvent;
+    public List<Application> readByDepartment(int department){
+        List<Application> applications = new ArrayList<>();
+        try {
+            List<Employee> employees = employeeDAO.readByDepartment(department);
+            for(int i = 0; i < employees.size(); i++){
+                List<Application> applications1 = new ArrayList<>();
+                applications1 = applicationDAO.readByEmployeeId(employees.get(i).getId());
+                for(int j = 0; j < applications1.size(); j++){
+                    applications.add(applications1.get(j));
+                }
+            }
+            return applications;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
-    private dateErrors checkDate(Date date){
-        Date today = new Date();
-        if(date.after(today)) return dateErrors.AFTER;
-        else return dateErrors.GOOD;
-    }
-
-    public double returnPercent(String type){
-        return percents.get(type);
-    }
-
-    private double determineAmount(double cost, double percent){
-        double adjustedCost = cost*percent;
-        if(adjustedCost > 1000) return 1000.0;
-        else return adjustedCost;
+    public List<Application> readByStatus(String status){
+        List<Application> application = new ArrayList<>();
+        try {
+            application = applicationDAO.readByStatus(status);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return application;
     }
 }

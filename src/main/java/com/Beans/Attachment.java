@@ -4,6 +4,11 @@ public class Attachment {
     private int id;
     private int applicationId;
     private String filename;
+    private boolean inDatabase;
+
+    public boolean isInDatabase() { return inDatabase; }
+
+    public void setInDatabase(boolean inDatabase) { this.inDatabase = inDatabase; }
 
     public int getId() {
         return id;

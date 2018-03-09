@@ -6,6 +6,16 @@ public class Application {
     private int eventId;
     private int gradingFormat;
     private String justification;
+    private String status;
+    private boolean inDatabase;
+
+    public boolean isInDatabase() { return inDatabase; }
+
+    public void setInDatabase(boolean inDatabase) { this.inDatabase = inDatabase; }
+
+    public String getStatus() { return status; }
+
+    public void setStatus(String status) { this.status = status; }
 
     public int getId() {
         return id;
@@ -47,6 +57,5 @@ public class Application {
         this.gradingFormat = gradingFormat;
     }
 
-    public Application(){
-    }
+    public Application(){}
 }

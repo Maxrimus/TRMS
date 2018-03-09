@@ -6,6 +6,26 @@ public class Employee {
     private String firstName;
     private String lastName;
     private String title;
+    private String username;
+    private String password;
+    private String emaill;
+    private boolean inDatabase;
+
+    public boolean isInDatabase() { return inDatabase; }
+
+    public void setInDatabase(boolean inDatabase) { this.inDatabase = inDatabase; }
+
+    public String getUsername() { return username; }
+
+    public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+
+    public void setPassword(String password) { this.password = password; }
+
+    public String getEmaill() { return emaill; }
+
+    public void setEmaill(String emaill) { this.emaill = emaill; }
 
     public int getId() {
         return id;

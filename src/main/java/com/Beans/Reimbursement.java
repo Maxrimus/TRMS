@@ -4,6 +4,11 @@ public class Reimbursement {
     private int id;
     private double amountAwarded;
     private double amountPending;
+    private boolean inDatabase;
+
+    public boolean isInDatabase() { return inDatabase; }
+
+    public void setInDatabase(boolean inDatabase) { this.inDatabase = inDatabase; }
 
     public int getId() {
         return id;

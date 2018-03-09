@@ -11,6 +11,11 @@ public class LearningEvent {
     private double eventCost;
     private String eventLocation;
     private String eventType;
+    private boolean inDatabase;
+
+    public boolean isInDatabase() { return inDatabase; }
+
+    public void setInDatabase(boolean inDatabase) { this.inDatabase = inDatabase; }
 
     public int getId() {
         return id;
